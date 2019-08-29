@@ -47,3 +47,43 @@ Enter pass phrase for /etc/pki/CA/private/cakey.pem:
   sudo /usr/sbin/ocspd -d -c /etc/ocspd/ocspd.conf -k super_safe_password
   test with openssl
   openssl ocsp -VAfile ocsp_newcert.pem -issuer /etc/pki/CA/cacert.pem -cert invalid_newcert.pem -url http://localhost:2560/
+
+Note OCSP responder needs the following in /etc/pki/tls/openssl.cnf:
++++
+[ v3_OCSP ]
+
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = OCSPSigning
++++
+
+Note the certificates have alternates names (jfcpc and localhost):
+https://localhost:8888/cgi-bin/printenv
+https://jfcpc:8888/cgi-bin/printenv
++++
+[ v3_ext ]
+
+basicConstraints = CA:FALSE
+subjectAltName   = @alt_names
+
+[alt_names]
+
+DNS.1 = jfcpc
+DNS.2 = localhost
++++
+
+The CA can also put a OCSP server and stamping in:
++++
+[ usr_cert ]
+#extendedKeyUsage = critical,timeStamping
+authorityInfoAccess = OCSP;URI:http://localhost:2560/
++++
+Create the certificate and sign it.
+  openssl req -new -out valid_ocsp_newreq.pem -keyout valid_ocsp_newkey.pem (create the request)
+  sudo openssl ca -in valid_ocsp_newreq.pem -out valid_ocsp_newcert.pem (sign it)
+  openssl pkcs12 -export -inkey valid_ocsp_newkey.pem -in valid_ocsp_newcert.pem -out valid_ocsp.p12 (export for FF).
+Check OSCP server:
++++
+[jfclere@pc-87 httpdssl]$ openssl x509 -noout -ocsp_uri -in valid_ocsp_newcert.pem
+http://localhost:2560/
++++
