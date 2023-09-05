@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include "hex.h"
 
-void jfcconvert(char *string);
 int main() {
    char string[] = "Hello, World!";
    printf("%s\n", string);

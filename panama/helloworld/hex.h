@@ -1,0 +1,1 @@
+int jfcconvert(char *string);
