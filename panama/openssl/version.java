@@ -9,16 +9,11 @@ import java.lang.invoke.MethodHandle;
 
 class version { 
     void main() { 
-        System.out.println("Hello, World!");
-        System.loadLibrary("crypto");
         try {
-            Arena arena = Arena.ofConfined();
-            SymbolLookup libssl = SymbolLookup.libraryLookup("libcrypto.so", arena);
-	    MemorySegment OpenSSL_versionSymbol = libssl.find("OpenSSL_version").orElseThrow();
+            System.loadLibrary("ssl");
+	    MemorySegment OpenSSL_versionSymbol = SymbolLookup.loaderLookup().find("OpenSSL_version").orElseThrow();
 	    MethodHandle OpenSSL_version = Linker.nativeLinker().downcallHandle(OpenSSL_versionSymbol, FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
-            // 0 is OPENSSL_VERSION, 6 is OPENSSL_VERSION_STRING
             MemorySegment version = (MemorySegment) OpenSSL_version.invokeExact(0);
-	    System.out.println("Hello " +  version);
             MemorySegment ptr = version.reinterpret(128); 
             String sversion = ptr.getUtf8String(0);
 	    System.out.println("Hello " + sversion);
